@@ -375,18 +375,35 @@ const App = {
 
       for (let q = startQ; q <= endQ; q++) {
         const i = q - 1;
-        const answered = key[i] !== null;
+        const ans = key[i];
+        const answered = ans !== null;
+        const isMulti = ans === 'MULTIPLE';
+        const multiOpts = (this.keyMultiDetails && this.keyMultiDetails[q]) || [];
+        const multiBadge = isMulti
+          ? `<span class="badge-multi-key" title="Double filled: strict rule gives 0 marks" style="font-size:10px; font-weight:700; color:#ef4444; background:rgba(239,68,68,0.12); padding:2px 5px; border-radius:4px; margin-left:4px;">⚠️ MULTI</span>`
+          : '';
+
         html += `
-          <div class="answer-row" id="answer-row-${q}">
-            <span class="q-num ${answered ? 'answered' : ''}">${q}</span>
+          <div class="answer-row ${isMulti ? 'multi-row-highlight' : ''}" id="answer-row-${q}">
+            <span class="q-num ${answered ? (isMulti ? 'multi-num' : 'answered') : ''}">${q}</span>
+            ${multiBadge}
             <div class="answer-bubbles">
-              ${options.map(opt => `
-                <button class="bubble ${key[i] === opt ? 'selected' : ''}"
-                        data-q="${i}" data-opt="${opt}"
-                        onclick="App.selectKeyAnswer(${i}, '${opt}')">
-                  ${opt}
-                </button>
-              `).join('')}
+              ${options.map(opt => {
+                let cls = 'bubble';
+                if (ans === opt) {
+                  cls += ' selected';
+                } else if (isMulti && multiOpts.includes(opt)) {
+                  cls += ' multi';
+                }
+                return `
+                  <button class="${cls}"
+                          data-q="${i}" data-opt="${opt}"
+                          title="${isMulti && multiOpts.includes(opt) ? `Option ${opt} detected as filled (tap to set as single key)` : `Option ${opt}`}"
+                          onclick="App.selectKeyAnswer(${i}, '${opt}')">
+                    ${opt}
+                  </button>
+                `;
+              }).join('')}
             </div>
           </div>
         `;
@@ -399,15 +416,15 @@ const App = {
   },
 
   selectKeyAnswer(qIndex, option) {
+    const q = qIndex + 1;
+    if (this.keyMultiDetails && this.keyMultiDetails[q]) {
+      delete this.keyMultiDetails[q];
+    }
     // Update the data
     this.currentTest.answerKey[qIndex] = option;
 
-    // Update UI - deselect all in row, select the chosen one
-    const row = document.getElementById(`answer-row-${qIndex + 1}`);
-    row.querySelectorAll('.bubble').forEach(b => b.classList.remove('selected'));
-    row.querySelector(`[data-opt="${option}"]`).classList.add('selected');
-    row.querySelector('.q-num').classList.add('answered');
-
+    // Re-render row
+    this.renderAnswerKeyGrid();
     this.updateKeyProgress();
   },
 
@@ -449,6 +466,7 @@ const App = {
       omrScanner.setDebugCanvas(debugCanvas);
 
       const result = await omrScanner.processFile(file, this.currentTest.numQuestions);
+      this.keyMultiDetails = result.multiDetails || {};
 
       // Apply detected answers to the key
       let singleDetected = 0;
