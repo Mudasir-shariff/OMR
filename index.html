@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Scan MCQ answer sheets (OMR) with your phone camera, auto-detect answers, and export results to Excel.">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <title>OMR Dot Scanner — MCQ Answer Sheet Scanner</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- SheetJS (xlsx) for Excel export -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== HEADER ===== -->
+    <header class="app-header">
+      <div class="header-inner">
+        <button id="btn-back" class="header-back hidden" aria-label="Go back">←</button>
+        <div class="header-content">
+          <div class="college-header-pill">BGS Group of Institutions • Chickballapur Division</div>
+          <h1 id="header-title" class="header-title">OMR Evaluation System</h1>
+          <div id="header-subtitle" class="header-subtitle"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="app-main">
+
+      <!-- ===== HOME VIEW ===== -->
+      <section id="view-home" class="view active">
+        <div class="hero">
+          <div class="trust-badge">Sri Adichunchanagiri Shikshana Trust®</div>
+          <div class="college-main-title">BGS Group of Institutions</div>
+          <div class="college-sub-division">Chickballapur Division — Examination Assessment Cell</div>
+          <p class="college-system-tag">Precision OMR Recognition & Tabulation System (CET & NEET Series)</p>
+        </div>
+
+        <button id="btn-create-test" class="btn btn-primary btn-block btn-lg mb-20">
+          ＋ Create New Test
+        </button>
+
+        <div id="tests-list">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ===== CREATE TEST VIEW ===== -->
+      <section id="view-create" class="view">
+        <div class="glass-card" style="margin-top: 16px;">
+          <h2 style="font-size: 1.25rem; margin-bottom: 20px;">New Test Details</h2>
+
+          <div class="form-group">
+            <label class="form-label" for="input-test-name">Test Name</label>
+            <input type="text" id="input-test-name" class="form-input"
+                   placeholder="e.g. Math Final Exam 2026"
+                   maxlength="100" autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-num-questions">Number of Questions</label>
+            <select id="input-num-questions" class="form-input">
+              <option value="50">50 Questions</option>
+              <option value="100">100 Questions</option>
+              <option value="150">150 Questions</option>
+              <option value="200" selected>200 Questions</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Exam Mode & Marking Scheme</label>
+            <div class="mode-select-grid">
+              <div class="mode-option-card active" id="create-card-cet" onclick="App.setCreateExamMode('CET')">
+                <div class="mode-badge cet">CET</div>
+                <div class="mode-info">
+                  <div class="mode-name">Karnataka CET / Standard</div>
+                  <div class="mode-rules">
+                    <span class="rule-chip positive">+1 Correct</span>
+                    <span class="rule-chip neutral">0 Wrong / Blank</span>
+                    <span class="rule-chip warning">0 Double-fill</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mode-option-card" id="create-card-neet" onclick="App.setCreateExamMode('NEET')">
+                <div class="mode-badge neet">NEET</div>
+                <div class="mode-info">
+                  <div class="mode-name">NEET / Negative Marking</div>
+                  <div class="mode-rules">
+                    <span class="rule-chip positive">+4 Correct</span>
+                    <span class="rule-chip negative">-1 Wrong</span>
+                    <span class="rule-chip neutral">0 Blank</span>
+                    <span class="rule-chip warning">0 Double-fill</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button id="btn-create-continue" class="btn btn-primary btn-block btn-lg mt-16">
+            Continue →
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== ANSWER KEY VIEW ===== -->
+      <section id="view-answer-key" class="view">
+
+        <!-- Exam Mode & Scoring Scheme Bar -->
+        <div class="exam-mode-bar mb-16">
+          <div class="mode-bar-left">
+            <span class="mode-bar-label">Scoring Scheme:</span>
+            <div class="exam-mode-pills">
+              <button type="button" class="mode-pill-btn active" id="pill-mode-cet" onclick="App.setAnswerKeyMode('CET')">
+                <span class="pill-title">⚡ CET (+1 / 0)</span>
+              </button>
+              <button type="button" class="mode-pill-btn" id="pill-mode-neet" onclick="App.setAnswerKeyMode('NEET')">
+                <span class="pill-title">🎯 NEET (+4 / -1)</span>
+              </button>
+            </div>
+            <span id="current-mode-badge" class="mode-badge cet">CET (+1 / 0)</span>
+          </div>
+          <div class="strict-rule-tag">
+            ⚖️ <strong>Strict Rule:</strong> 2+ options filled = 0 marks
+          </div>
+        </div>
+
+        <!-- Tabs: Manual / Scan -->
+        <div class="tabs mt-8">
+          <button class="tab-btn active" data-tab="manual">Manual Entry</button>
+          <button class="tab-btn" data-tab="scan">Scan Sheet</button>
+        </div>
+
+        <!-- Manual Entry Tab -->
+        <div id="tab-manual" class="tab-content active">
+          <!-- Toolbar -->
+          <div class="key-toolbar">
+            <div class="key-search">
+              <input type="number" id="key-search" class="form-input"
+                     placeholder="Jump to Q..." min="1" max="200">
+            </div>
+            <span id="key-progress-text" class="key-counter">0 / 200 answered</span>
+          </div>
+
+          <div class="progress-bar mb-16">
+            <div class="fill" id="key-progress-fill" style="width: 0%"></div>
+          </div>
+
+          <!-- Answer Key Grid -->
+          <div id="answer-key-grid">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Scan Tab -->
+        <div id="tab-scan" class="tab-content">
+          <div class="glass-card mt-8 mb-16">
+            <p class="text-secondary text-sm mb-12">
+              Take a photo or upload an image of a filled OMR sheet to auto-detect the answer key.
+              You can review, adjust options, or change exam mode before submitting.
+            </p>
+
+            <div class="scanner-area" id="key-scanner-area">
+              <div class="scanner-icon">📸</div>
+              <div class="scanner-text">Tap to capture or upload answer key sheet</div>
+              <div class="scanner-hint">Supports both 5-Column Grid and 6-Column layouts</div>
+              <input type="file" id="key-scan-input" accept="image/*" capture="environment">
+            </div>
+          </div>
+
+          <!-- Scan Preview -->
+          <div id="key-scan-preview" class="hidden">
+            <div class="debug-canvas-wrap mb-8">
+              <img id="key-scan-img" alt="Captured answer key">
+            </div>
+          </div>
+
+          <!-- Debug Canvas -->
+          <div id="key-debug-wrap" class="hidden">
+            <div class="debug-canvas-wrap">
+              <span class="debug-label">Detection Preview (Detected Circles)</span>
+              <canvas id="key-debug-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sticky Save Button -->
+        <div class="sticky-bottom">
+          <button id="btn-save-key" class="btn btn-success btn-block btn-lg" disabled>
+            ✓ Save & Submit Answer Key
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== SCANNER VIEW ===== -->
+      <section id="view-scanner" class="view">
+        <div class="glass-card mt-8 mb-16">
+          <div class="form-group">
+            <label class="form-label" for="input-student-name">Student Name</label>
+            <input type="text" id="input-student-name" class="form-input"
+                   placeholder="Enter student's name" maxlength="100" autocomplete="off">
+          </div>
+
+          <div class="section-title mt-16">Choose Entry Method</div>
+
+          <div class="flex gap-8 mb-12">
+            <div class="scanner-area" style="flex: 1; padding: 24px 12px;">
+              <div class="scanner-icon" style="font-size: 36px;">📷</div>
+              <div class="scanner-text">Scan Sheet</div>
+              <div id="cv-status" class="scanner-hint">
+                <span class="text-success">● Ready</span>
+              </div>
+              <input type="file" id="scan-file-input" accept="image/*" capture="environment">
+            </div>
+            <button id="btn-manual-entry" class="scanner-area" style="flex: 1; padding: 24px 12px; cursor: pointer; border-color: var(--accent-blue);" onclick="App.startManualEntry()">
+              <div class="scanner-icon" style="font-size: 36px;">✏️</div>
+              <div class="scanner-text">Enter Manually</div>
+              <div class="scanner-hint">Tap A/B/C/D answers</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Scan Preview -->
+        <div id="scan-preview" class="hidden">
+          <div class="debug-canvas-wrap mb-8">
+            <img id="scan-img" alt="Captured student sheet">
+          </div>
+        </div>
+
+        <!-- Debug Canvas -->
+        <div id="scan-debug-wrap" class="hidden">
+          <div class="debug-canvas-wrap">
+            <span class="debug-label">Detection Preview</span>
+            <canvas id="scan-debug-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Quick tip -->
+        <div class="glass-card" style="margin-top: 8px;">
+          <p class="text-secondary text-sm">
+            💡 <strong>Tips for best results:</strong><br>
+            • Place the sheet on a flat, dark surface<br>
+            • Ensure even lighting (no shadows)<br>
+            • Hold the camera directly above the sheet<br>
+            • Make sure all 4 corners are visible
+          </p>
+        </div>
+      </section>
+
+      <!-- ===== MANUAL ENTRY VIEW (Student Answers) ===== -->
+      <section id="view-manual-entry" class="view">
+        <div class="key-toolbar mt-8">
+          <div class="key-search">
+            <input type="number" id="manual-search" class="form-input"
+                   placeholder="Jump to Q..." min="1" max="200">
+          </div>
+          <span id="manual-progress-text" class="key-counter">0 / 200 answered</span>
+        </div>
+
+        <div class="progress-bar mb-16">
+          <div class="fill" id="manual-progress-fill" style="width: 0%"></div>
+        </div>
+
+        <!-- Student Answer Grid -->
+        <div id="manual-entry-grid">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Sticky Submit Button -->
+        <div class="sticky-bottom">
+          <button id="btn-submit-manual" class="btn btn-primary btn-block btn-lg">
+            ✓ Submit & Review
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== REVIEW VIEW ===== -->
+      <section id="view-review" class="view">
+        <!-- Score Display -->
+        <div class="glass-card text-center mt-8 mb-16">
+          <div id="review-student-name" style="font-size: 1.125rem; font-weight: 600; margin-bottom: 8px;"></div>
+          <div class="score-circle">
+            <svg viewBox="0 0 160 160">
+              <defs>
+                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#667eea"/>
+                  <stop offset="100%" style="stop-color:#764ba2"/>
+                </linearGradient>
+              </defs>
+              <circle class="track" cx="80" cy="80" r="70"/>
+              <circle class="progress" id="review-score-progress" cx="80" cy="80" r="70"/>
+            </svg>
+            <span class="score-value" id="review-score-value">0%</span>
+            <span class="score-label" id="review-score-label">0 / 0 marks</span>
+          </div>
+
+          <div id="review-breakdown-chips" class="breakdown-chips mt-12 mb-8">
+            <!-- Populated by JS -->
+          </div>
+          <p id="review-breakdown-text" class="text-xs text-muted mt-8">Tap any bubble to correct the detected answer</p>
+        </div>
+
+        <!-- Answer Review Grid -->
+        <div id="review-grid">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Sticky Save Button & Excel Sync -->
+        <div class="sticky-bottom">
+          <div class="excel-sync-bar">
+            <label class="excel-toggle-label" for="chk-auto-export">
+              <input type="checkbox" id="chk-auto-export" checked>
+              <span>Auto-save to Excel (.xlsx) on Save</span>
+            </label>
+            <button type="button" class="btn-sm-excel" onclick="App.exportCurrentResults()" title="Download current Excel workbook">
+              📥 Excel Sheet
+            </button>
+          </div>
+          <button id="btn-save-student" class="btn btn-primary btn-block btn-lg">
+            💾 Save & Store in Excel (.xlsx)
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== RESULTS VIEW ===== -->
+      <section id="view-results" class="view">
+        <!-- Stats -->
+        <div class="stats-grid mt-8">
+          <div class="stat-card">
+            <div class="stat-value gradient" id="stat-students">0</div>
+            <div class="stat-label">Students</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value gradient" id="stat-average">—</div>
+            <div class="stat-label">Avg Marks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value gradient" id="stat-highest">—</div>
+            <div class="stat-label">Highest</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value gradient" id="stat-pass-rate">—</div>
+            <div class="stat-label">Pass Rate</div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-8 mb-16">
+          <button id="btn-scan-more" class="btn btn-primary" style="flex: 1;">
+            📷 Scan Student
+          </button>
+          <button id="btn-export" class="btn btn-secondary" style="flex: 1;" disabled>
+            📊 Export Excel
+          </button>
+        </div>
+
+        <!-- Edit Answer Key link -->
+        <div class="text-center mb-16">
+          <button class="btn btn-ghost" onclick="App.navigateTo('answer-key', { testId: App.currentTest?.id })">
+            ✏️ Edit Answer Key & Scoring Mode
+          </button>
+        </div>
+
+        <!-- Results Table -->
+        <div class="section-title">Student Results</div>
+        <div class="results-table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Mode</th>
+                <th>Marks</th>
+                <th>Breakdown</th>
+                <th>%</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===== LOADING OVERLAY ===== -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="processing-animation"></div>
+      <div id="loading-text" class="loading-text">Processing...</div>
+    </div>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div id="toast-container" class="toast-container"></div>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script src="storage.js"></script>
+  <script src="scanner.js"></script>
+  <script src="export.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
