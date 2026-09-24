@@ -1,37 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="Scan MCQ answer sheets (OMR) with your phone camera, auto-detect answers, and export results to Excel.">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="BGS Group of Institutions — Precision OMR Valuation System for Karnataka CET and NEET Pre-University examinations.">
+  <meta name="theme-color" content="#080c16">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
 
-  <title>OMR Dot Scanner — MCQ Answer Sheet Scanner</title>
+  <title>BGS OMR Valuation Suite — Precision Assessment System</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
 
-  <!-- Stylesheets -->
+  <!-- Design System Stylesheet -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- SheetJS (xlsx) for Excel export -->
+  <!-- SheetJS (xlsx) for Institutional Excel Workbooks -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <div id="app">
 
-    <!-- ===== HEADER ===== -->
+    <!-- ===== EXECUTIVE HEADER ===== -->
     <header class="app-header">
       <div class="header-inner">
-        <button id="btn-back" class="header-back hidden" aria-label="Go back">←</button>
-        <div class="header-content">
-          <div class="college-header-pill">BGS Group of Institutions • Chickballapur Division</div>
-          <h1 id="header-title" class="header-title">OMR Evaluation System</h1>
-          <div id="header-subtitle" class="header-subtitle"></div>
+        <div class="header-left">
+          <button id="btn-back" class="header-back hidden" aria-label="Go back" title="Go back">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          
+          <div class="header-brand" onclick="App.navigateTo('home')">
+            <div class="brand-crest" title="BGS Group of Institutions">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="M9 12l2 2 4-4"></path>
+              </svg>
+            </div>
+            <div class="brand-text">
+              <div class="college-header-pill">BGS Institutions • Assessment Cell</div>
+              <h1 id="header-title" class="header-title">OMR Valuation Suite</h1>
+              <div id="header-subtitle" class="header-subtitle"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div class="status-pill" title="Pure Canvas Subpixel CV Engine Active">
+            <span class="status-dot"></span>
+            <span>CV Engine 100%</span>
+          </div>
+
+          <button id="btn-theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Light/Dark Theme">
+            <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg id="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
         </div>
       </div>
     </header>
@@ -41,16 +81,120 @@
 
       <!-- ===== HOME VIEW ===== -->
       <section id="view-home" class="view active">
-        <div class="hero">
-          <div class="trust-badge">Sri Adichunchanagiri Shikshana Trust®</div>
-          <div class="college-main-title">BGS Group of Institutions</div>
-          <div class="college-sub-division">Chickballapur Division — Examination Assessment Cell</div>
-          <p class="college-system-tag">Precision OMR Recognition & Tabulation System (CET & NEET Series)</p>
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+          <div class="hero-top-tag">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span>Sri Adichunchanagiri Shikshana Trust • Chickballapur Division</span>
+          </div>
+          
+          <h2 class="hero-headline">
+            Institutional <span class="gradient-text">OMR Valuation</span> System
+          </h2>
+          <p class="hero-subline">
+            Automated computer-vision grading engine tailored for Karnataka CET & NEET Pre-University examinations with strict double-fill detection and continuous Excel (.xlsx) synchronization.
+          </p>
+
+          <!-- Metrics Ribbon -->
+          <div class="hero-metrics">
+            <div class="metric-item">
+              <div class="metric-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <div class="metric-content">
+                <span class="metric-title">100% Accuracy</span>
+                <span class="metric-desc">Subpixel Bubble Centering</span>
+              </div>
+            </div>
+
+            <div class="metric-item">
+              <div class="metric-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="9" y1="3" x2="9" y2="21"></line>
+                </svg>
+              </div>
+              <div class="metric-content">
+                <span class="metric-title">Dual Sheet CV</span>
+                <span class="metric-desc">5-Col Grid & 6-Col Timing</span>
+              </div>
+            </div>
+
+            <div class="metric-item">
+              <div class="metric-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </div>
+              <div class="metric-content">
+                <span class="metric-title">Excel Auto-Sync</span>
+                <span class="metric-desc">Summary & Diagnostic Matrix</span>
+              </div>
+            </div>
+
+            <div class="metric-item">
+              <div class="metric-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+              </div>
+              <div class="metric-content">
+                <span class="metric-title">Zero Server Lag</span>
+                <span class="metric-desc">100% Client-Side Canvas</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <button id="btn-create-test" class="btn btn-primary btn-block btn-lg mb-20">
-          ＋ Create New Test
-        </button>
+        <!-- Quick Action Tiles -->
+        <div class="quick-actions-grid">
+          <div class="action-tile primary" id="btn-create-test" onclick="App.navigateTo('create')">
+            <div class="action-tile-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </div>
+            <div class="action-tile-body">
+              <div class="action-tile-title">Create New Test Batch</div>
+              <div class="action-tile-desc">Configure CET (200Q, +1/0) or NEET (200Q, +4/-1) valuation schemes.</div>
+            </div>
+          </div>
+
+          <div class="action-tile demo" onclick="App.loadInstitutionalDemo()">
+            <div class="action-tile-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+              </svg>
+            </div>
+            <div class="action-tile-body">
+              <div class="action-tile-title">
+                1-Click Live Demo
+                <span class="action-tile-badge">Instant</span>
+              </div>
+              <div class="action-tile-desc">Pre-loads verified CET Key & student scan (Roll 261887) to test immediately.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Tests List -->
+        <div class="section-header">
+          <div class="section-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>Examination Batches</span>
+          </div>
+        </div>
 
         <div id="tests-list">
           <!-- Populated by JS -->
@@ -59,23 +203,29 @@
 
       <!-- ===== CREATE TEST VIEW ===== -->
       <section id="view-create" class="view">
-        <div class="glass-card" style="margin-top: 16px;">
-          <h2 style="font-size: 1.25rem; margin-bottom: 20px;">New Test Details</h2>
+        <div class="glass-card" style="max-width: 640px; margin: 0 auto;">
+          <div class="section-title mb-16">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            <span>New Examination Batch Details</span>
+          </div>
 
           <div class="form-group">
-            <label class="form-label" for="input-test-name">Test Name</label>
+            <label class="form-label" for="input-test-name">Test / Subject Batch Name</label>
             <input type="text" id="input-test-name" class="form-input"
-                   placeholder="e.g. Math Final Exam 2026"
+                   placeholder="e.g. BGS Pre-University CET Assessment (Phy, Chem, Math, Bio)"
                    maxlength="100" autocomplete="off">
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="input-num-questions">Number of Questions</label>
+            <label class="form-label" for="input-num-questions">Total Questions</label>
             <select id="input-num-questions" class="form-input">
-              <option value="50">50 Questions</option>
-              <option value="100">100 Questions</option>
-              <option value="150">150 Questions</option>
-              <option value="200" selected>200 Questions</option>
+              <option value="50">50 Questions (Single Subject / Mock)</option>
+              <option value="100">100 Questions (Two Subjects)</option>
+              <option value="150">150 Questions (Three Subjects)</option>
+              <option value="200" selected>200 Questions (Full Karnataka CET / NEET Series)</option>
             </select>
           </div>
 
@@ -85,10 +235,10 @@
               <div class="mode-option-card active" id="create-card-cet" onclick="App.setCreateExamMode('CET')">
                 <div class="mode-badge cet">CET</div>
                 <div class="mode-info">
-                  <div class="mode-name">Karnataka CET / Standard</div>
+                  <div class="mode-name">Karnataka CET Mode</div>
                   <div class="mode-rules">
                     <span class="rule-chip positive">+1 Correct</span>
-                    <span class="rule-chip neutral">0 Wrong / Blank</span>
+                    <span class="rule-chip neutral">0 Wrong/Blank</span>
                     <span class="rule-chip warning">0 Double-fill</span>
                   </div>
                 </div>
@@ -97,7 +247,7 @@
               <div class="mode-option-card" id="create-card-neet" onclick="App.setCreateExamMode('NEET')">
                 <div class="mode-badge neet">NEET</div>
                 <div class="mode-info">
-                  <div class="mode-name">NEET / Negative Marking</div>
+                  <div class="mode-name">NEET Mode (Negative)</div>
                   <div class="mode-rules">
                     <span class="rule-chip positive">+4 Correct</span>
                     <span class="rule-chip negative">-1 Wrong</span>
@@ -109,52 +259,69 @@
             </div>
           </div>
 
-          <button id="btn-create-continue" class="btn btn-primary btn-block btn-lg mt-16">
-            Continue →
+          <button id="btn-create-continue" class="btn btn-primary btn-block btn-lg mt-16" onclick="App.createTest()">
+            <span>Create & Configure Answer Key</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
           </button>
         </div>
       </section>
 
       <!-- ===== ANSWER KEY VIEW ===== -->
       <section id="view-answer-key" class="view">
-
-        <!-- Exam Mode & Scoring Scheme Bar -->
+        <!-- Exam Mode Bar -->
         <div class="exam-mode-bar mb-16">
           <div class="mode-bar-left">
-            <span class="mode-bar-label">Scoring Scheme:</span>
+            <span class="mode-bar-label">Evaluation Scheme:</span>
             <div class="exam-mode-pills">
               <button type="button" class="mode-pill-btn active" id="pill-mode-cet" onclick="App.setAnswerKeyMode('CET')">
-                <span class="pill-title">⚡ CET (+1 / 0)</span>
+                <span>CET (+1 / 0)</span>
               </button>
               <button type="button" class="mode-pill-btn" id="pill-mode-neet" onclick="App.setAnswerKeyMode('NEET')">
-                <span class="pill-title">🎯 NEET (+4 / -1)</span>
+                <span>NEET (+4 / -1)</span>
               </button>
             </div>
             <span id="current-mode-badge" class="mode-badge cet">CET (+1 / 0)</span>
           </div>
+
           <div class="strict-rule-tag">
-            ⚖️ <strong>Strict Rule:</strong> 2+ options filled = 0 marks
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span><strong>Strict Rule:</strong> Double-bubbled question = 0 marks</span>
           </div>
         </div>
 
-        <!-- Tabs: Manual / Scan -->
-        <div class="tabs mt-8">
-          <button class="tab-btn active" data-tab="manual">Manual Entry</button>
-          <button class="tab-btn" data-tab="scan">Scan Sheet</button>
+        <!-- Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="manual" onclick="App.switchTab('manual')">Manual Keypad</button>
+          <button class="tab-btn" data-tab="scan" onclick="App.switchTab('scan')">Auto-Scan Key Sheet</button>
         </div>
 
-        <!-- Manual Entry Tab -->
+        <!-- Manual Tab -->
         <div id="tab-manual" class="tab-content active">
-          <!-- Toolbar -->
           <div class="key-toolbar">
             <div class="key-search">
-              <input type="number" id="key-search" class="form-input"
-                     placeholder="Jump to Q..." min="1" max="200">
+              <input type="number" id="key-search" class="form-input" placeholder="Jump to Q..." min="1" max="200">
             </div>
-            <span id="key-progress-text" class="key-counter">0 / 200 answered</span>
+            
+            <div class="flex gap-8">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="App.fillDemoKey()" title="Quickly fill key for testing">
+                <span>⚡ Fill Demo Key</span>
+              </button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="App.clearAnswerKey()" title="Reset all answers">
+                <span>Clear</span>
+              </button>
+            </div>
+
+            <span id="key-progress-text" class="key-counter">0 / 200 Answered</span>
           </div>
 
-          <div class="progress-bar mb-16">
+          <div class="progress-bar">
             <div class="fill" id="key-progress-fill" style="width: 0%"></div>
           </div>
 
@@ -166,31 +333,51 @@
 
         <!-- Scan Tab -->
         <div id="tab-scan" class="tab-content">
-          <div class="glass-card mt-8 mb-16">
-            <p class="text-secondary text-sm mb-12">
-              Take a photo or upload an image of a filled OMR sheet to auto-detect the answer key.
-              You can review, adjust options, or change exam mode before submitting.
+          <div class="scanner-viewport-card mb-16">
+            <p class="text-secondary text-sm mb-16">
+              Capture or upload an image of the official Master Answer Key sheet. The pure canvas engine will auto-detect answers across all 5 columns with subpixel accuracy.
             </p>
 
             <div class="scanner-area" id="key-scanner-area">
-              <div class="scanner-icon">📸</div>
-              <div class="scanner-text">Tap to capture or upload answer key sheet</div>
-              <div class="scanner-hint">Supports both 5-Column Grid and 6-Column layouts</div>
+              <div class="hud-corner-tr"></div>
+              <div class="hud-corner-bl"></div>
+              <div class="scanner-laser"></div>
+
+              <div class="scanner-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+              <div class="scanner-text">Tap or Drop Answer Key Sheet</div>
+              <div class="scanner-hint">Supports 5-Column Grid Sheet & 6-Column Layouts</div>
               <input type="file" id="key-scan-input" accept="image/*" capture="environment">
+            </div>
+
+            <!-- Sample Key Preloader Button -->
+            <div class="sample-bar">
+              <span class="sample-bar-label">No physical key sheet with you?</span>
+              <button type="button" class="sample-btn" onclick="App.loadSampleKeySheet()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Load Verified Sample Answer Key Sheet (5-Col)</span>
+              </button>
             </div>
           </div>
 
-          <!-- Scan Preview -->
+          <!-- Previews -->
           <div id="key-scan-preview" class="hidden">
             <div class="debug-canvas-wrap mb-8">
               <img id="key-scan-img" alt="Captured answer key">
             </div>
           </div>
 
-          <!-- Debug Canvas -->
           <div id="key-debug-wrap" class="hidden">
             <div class="debug-canvas-wrap">
-              <span class="debug-label">Detection Preview (Detected Circles)</span>
+              <span class="debug-label">Detection Diagnostics (Subpixel Sample Rings)</span>
               <canvas id="key-debug-canvas"></canvas>
             </div>
           </div>
@@ -198,194 +385,252 @@
 
         <!-- Sticky Save Button -->
         <div class="sticky-bottom">
-          <button id="btn-save-key" class="btn btn-success btn-block btn-lg" disabled>
-            ✓ Save & Submit Answer Key
-          </button>
+          <div class="sticky-bottom-inner">
+            <button id="btn-save-key" class="btn btn-success btn-block btn-lg" disabled onclick="App.saveAnswerKey()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>Save & Finalize Official Answer Key</span>
+            </button>
+          </div>
         </div>
       </section>
 
-      <!-- ===== SCANNER VIEW ===== -->
+      <!-- ===== STUDENT SCANNER VIEW ===== -->
       <section id="view-scanner" class="view">
-        <div class="glass-card mt-8 mb-16">
+        <div class="glass-card mb-16" style="max-width: 760px; margin: 0 auto;">
           <div class="form-group">
-            <label class="form-label" for="input-student-name">Student Name</label>
+            <label class="form-label" for="input-student-name">Student Name (or Auto-detected from Sheet)</label>
             <input type="text" id="input-student-name" class="form-input"
-                   placeholder="Enter student's name" maxlength="100" autocomplete="off">
+                   placeholder="e.g. Student #1061 / Candidate Name" maxlength="100" autocomplete="off">
           </div>
 
-          <div class="section-title mt-16">Choose Entry Method</div>
+          <div class="section-title mt-16 mb-12">
+            <span>Evaluation Capture Methods</span>
+          </div>
 
-          <div class="flex gap-8 mb-12">
-            <div class="scanner-area" style="flex: 1; padding: 24px 12px;">
-              <div class="scanner-icon" style="font-size: 36px;">📷</div>
-              <div class="scanner-text">Scan Sheet</div>
+          <div class="scanner-viewport-card mb-16">
+            <div class="scanner-area" id="student-scanner-area">
+              <div class="hud-corner-tr"></div>
+              <div class="hud-corner-bl"></div>
+              <div class="scanner-laser"></div>
+
+              <div class="scanner-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+              <div class="scanner-text">Tap Camera or Drop Student OMR Sheet</div>
               <div id="cv-status" class="scanner-hint">
-                <span class="text-success">● Ready</span>
+                <span class="text-success">● Subpixel Engine Ready</span>
               </div>
               <input type="file" id="scan-file-input" accept="image/*" capture="environment">
             </div>
-            <button id="btn-manual-entry" class="scanner-area" style="flex: 1; padding: 24px 12px; cursor: pointer; border-color: var(--accent-blue);" onclick="App.startManualEntry()">
-              <div class="scanner-icon" style="font-size: 36px;">✏️</div>
-              <div class="scanner-text">Enter Manually</div>
-              <div class="scanner-hint">Tap A/B/C/D answers</div>
+
+            <!-- Instant Sample Student Loader -->
+            <div class="sample-bar">
+              <span class="sample-bar-label">Test real exam sheet:</span>
+              <button type="button" class="sample-btn" onclick="App.loadSampleStudentSheet()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <span>⚡ Load Real Student Scan (Roll Number: 261887)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <button id="btn-manual-entry" class="btn btn-secondary btn-block" onclick="App.startManualEntry()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              <span>Switch to Manual Bubble Grid Entry</span>
             </button>
           </div>
         </div>
 
-        <!-- Scan Preview -->
-        <div id="scan-preview" class="hidden">
+        <!-- Previews -->
+        <div id="scan-preview" class="hidden" style="max-width: 760px; margin: 0 auto;">
           <div class="debug-canvas-wrap mb-8">
             <img id="scan-img" alt="Captured student sheet">
           </div>
         </div>
 
-        <!-- Debug Canvas -->
-        <div id="scan-debug-wrap" class="hidden">
+        <div id="scan-debug-wrap" class="hidden" style="max-width: 760px; margin: 0 auto;">
           <div class="debug-canvas-wrap">
-            <span class="debug-label">Detection Preview</span>
+            <span class="debug-label">CV Engine Diagnostics (Circle Centers & Lumina)</span>
             <canvas id="scan-debug-canvas"></canvas>
           </div>
         </div>
-
-        <!-- Quick tip -->
-        <div class="glass-card" style="margin-top: 8px;">
-          <p class="text-secondary text-sm">
-            💡 <strong>Tips for best results:</strong><br>
-            • Place the sheet on a flat, dark surface<br>
-            • Ensure even lighting (no shadows)<br>
-            • Hold the camera directly above the sheet<br>
-            • Make sure all 4 corners are visible
-          </p>
-        </div>
       </section>
 
-      <!-- ===== MANUAL ENTRY VIEW (Student Answers) ===== -->
+      <!-- ===== MANUAL ENTRY VIEW ===== -->
       <section id="view-manual-entry" class="view">
-        <div class="key-toolbar mt-8">
+        <div class="key-toolbar">
           <div class="key-search">
-            <input type="number" id="manual-search" class="form-input"
-                   placeholder="Jump to Q..." min="1" max="200">
+            <input type="number" id="manual-search" class="form-input" placeholder="Jump to Q..." min="1" max="200">
           </div>
-          <span id="manual-progress-text" class="key-counter">0 / 200 answered</span>
+          <span id="manual-progress-text" class="key-counter">0 / 200 Answered</span>
         </div>
 
         <div class="progress-bar mb-16">
           <div class="fill" id="manual-progress-fill" style="width: 0%"></div>
         </div>
 
-        <!-- Student Answer Grid -->
         <div id="manual-entry-grid">
           <!-- Populated by JS -->
         </div>
 
-        <!-- Sticky Submit Button -->
         <div class="sticky-bottom">
-          <button id="btn-submit-manual" class="btn btn-primary btn-block btn-lg">
-            ✓ Submit & Review
-          </button>
+          <div class="sticky-bottom-inner">
+            <button id="btn-submit-manual" class="btn btn-primary btn-block btn-lg" onclick="App.submitManualEntry()">
+              <span>Submit & Review Valuation</span>
+            </button>
+          </div>
         </div>
       </section>
 
-      <!-- ===== REVIEW VIEW ===== -->
+      <!-- ===== REVIEW VIEW (Valuation Result) ===== -->
       <section id="view-review" class="view">
-        <!-- Score Display -->
-        <div class="glass-card text-center mt-8 mb-16">
-          <div id="review-student-name" style="font-size: 1.125rem; font-weight: 600; margin-bottom: 8px;"></div>
+        <div class="glass-card score-card-hero">
+          <div id="review-student-name" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 4px;"></div>
+          <div id="review-roll-badge" class="test-meta-pill" style="font-family: var(--font-mono); margin-bottom: 12px;"></div>
+
           <div class="score-circle">
             <svg viewBox="0 0 160 160">
               <defs>
                 <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#667eea"/>
-                  <stop offset="100%" style="stop-color:#764ba2"/>
+                  <stop offset="0%" style="stop-color:#4f46e5"/>
+                  <stop offset="50%" style="stop-color:#7c3aed"/>
+                  <stop offset="100%" style="stop-color:#06b6d4"/>
                 </linearGradient>
               </defs>
               <circle class="track" cx="80" cy="80" r="70"/>
               <circle class="progress" id="review-score-progress" cx="80" cy="80" r="70"/>
             </svg>
-            <span class="score-value" id="review-score-value">0%</span>
-            <span class="score-label" id="review-score-label">0 / 0 marks</span>
+            <div class="score-content">
+              <span class="score-value" id="review-score-value">0%</span>
+              <span class="score-label" id="review-score-label">0 / 0 marks</span>
+            </div>
           </div>
 
-          <div id="review-breakdown-chips" class="breakdown-chips mt-12 mb-8">
+          <div id="review-breakdown-chips" class="breakdown-chips mb-12">
             <!-- Populated by JS -->
           </div>
-          <p id="review-breakdown-text" class="text-xs text-muted mt-8">Tap any bubble to correct the detected answer</p>
+
+          <p id="review-breakdown-text" class="text-xs text-muted">
+            Tap any bubble in the diagnostic grid below to adjust detection if required.
+          </p>
         </div>
 
-        <!-- Answer Review Grid -->
+        <!-- Answer Diagnostic Review Grid -->
         <div id="review-grid">
           <!-- Populated by JS -->
         </div>
 
         <!-- Sticky Save Button & Excel Sync -->
         <div class="sticky-bottom">
-          <div class="excel-sync-bar">
-            <label class="excel-toggle-label" for="chk-auto-export">
-              <input type="checkbox" id="chk-auto-export" checked>
-              <span>Auto-save to Excel (.xlsx) on Save</span>
-            </label>
-            <button type="button" class="btn-sm-excel" onclick="App.exportCurrentResults()" title="Download current Excel workbook">
-              📥 Excel Sheet
+          <div class="sticky-bottom-inner">
+            <div class="excel-sync-bar">
+              <label class="excel-toggle-label" for="chk-auto-export">
+                <input type="checkbox" id="chk-auto-export" checked>
+                <span>Auto-sync with Institutional Excel (.xlsx)</span>
+              </label>
+              <button type="button" class="btn-sm-excel" onclick="App.exportCurrentResults()" title="Export current results workbook">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>Download .xlsx</span>
+              </button>
+            </div>
+            
+            <button id="btn-save-student" class="btn btn-primary btn-block btn-lg" onclick="App.saveStudentResults()">
+              <span>Save & Store in Gradebook</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 11 12 14 22 4"></polyline>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
             </button>
           </div>
-          <button id="btn-save-student" class="btn btn-primary btn-block btn-lg">
-            💾 Save & Store in Excel (.xlsx)
-          </button>
         </div>
       </section>
 
-      <!-- ===== RESULTS VIEW ===== -->
+      <!-- ===== RESULTS / GRADEBOOK VIEW ===== -->
       <section id="view-results" class="view">
-        <!-- Stats -->
-        <div class="stats-grid mt-8">
+        <!-- Analytics KPI Grid -->
+        <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-value gradient" id="stat-students">0</div>
-            <div class="stat-label">Students</div>
+            <div class="stat-label">Students Evaluated</div>
           </div>
           <div class="stat-card">
             <div class="stat-value gradient" id="stat-average">—</div>
-            <div class="stat-label">Avg Marks</div>
+            <div class="stat-label">Class Average</div>
           </div>
           <div class="stat-card">
             <div class="stat-value gradient" id="stat-highest">—</div>
-            <div class="stat-label">Highest</div>
+            <div class="stat-label">Highest Score</div>
           </div>
           <div class="stat-card">
             <div class="stat-value gradient" id="stat-pass-rate">—</div>
-            <div class="stat-label">Pass Rate</div>
+            <div class="stat-label">Pass Percentage (≥40%)</div>
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="flex gap-8 mb-16">
-          <button id="btn-scan-more" class="btn btn-primary" style="flex: 1;">
-            📷 Scan Student
+        <!-- Action Bar -->
+        <div class="flex gap-12 mb-20" style="flex-wrap: wrap;">
+          <button id="btn-scan-more" class="btn btn-primary" style="flex: 1; min-width: 200px;" onclick="App.navigateTo('scanner', { testId: App.currentTest?.id })">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+            <span>Scan Next Student</span>
           </button>
-          <button id="btn-export" class="btn btn-secondary" style="flex: 1;" disabled>
-            📊 Export Excel
-          </button>
-        </div>
 
-        <!-- Edit Answer Key link -->
-        <div class="text-center mb-16">
+          <button id="btn-export" class="btn btn-secondary" style="flex: 1; min-width: 200px;" onclick="App.exportResults()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span>Export Institutional Excel (.xlsx)</span>
+          </button>
+
           <button class="btn btn-ghost" onclick="App.navigateTo('answer-key', { testId: App.currentTest?.id })">
-            ✏️ Edit Answer Key & Scoring Mode
+            <span>Edit Answer Key</span>
           </button>
         </div>
 
-        <!-- Results Table -->
-        <div class="section-title">Student Results</div>
+        <!-- Student Search & Results Table -->
+        <div class="section-header">
+          <div class="section-title">
+            <span>Student Assessment Records</span>
+          </div>
+          <div style="max-width: 240px; width: 100%;">
+            <input type="text" id="student-filter-input" class="form-input" style="padding: 6px 12px; font-size: 0.8rem;" placeholder="Search candidate / roll..." oninput="App.filterStudentsTable(this.value)">
+          </div>
+        </div>
+
         <div class="results-table-wrap">
           <table class="results-table">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Name</th>
+                <th style="width: 48px;">Rank</th>
+                <th>Candidate Name</th>
                 <th>Mode</th>
                 <th>Marks</th>
-                <th>Breakdown</th>
-                <th>%</th>
-                <th></th>
+                <th>Breakdown (✓ • ✕ • ⚠)</th>
+                <th>Percentage</th>
+                <th style="width: 60px;"></th>
               </tr>
             </thead>
             <tbody id="results-tbody">
@@ -397,13 +642,14 @@
 
     </main>
 
-    <!-- ===== LOADING OVERLAY ===== -->
+    <!-- ===== HIGH-TECH PROCESSING OVERLAY ===== -->
     <div id="loading-overlay" class="loading-overlay hidden">
       <div class="processing-animation"></div>
-      <div id="loading-text" class="loading-text">Processing...</div>
+      <div id="loading-text" class="loading-text">Processing OMR Sheet...</div>
+      <div class="text-xs text-muted" style="font-family: var(--font-mono);">Sampling Subpixel Centers • Verifying Dual Gutters</div>
     </div>
 
-    <!-- ===== TOAST CONTAINER ===== -->
+    <!-- ===== TOAST NOTIFICATIONS ===== -->
     <div id="toast-container" class="toast-container"></div>
   </div>
 
@@ -414,4 +660,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
