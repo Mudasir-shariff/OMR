@@ -14,6 +14,19 @@ const App = {
   createExamMode: 'CET',
   answerKeyExamMode: 'CET',
 
+  // Live Camera Engine State (No photo capture required)
+  liveCameraStream: null,
+  liveCameraType: null, // 'student' or 'key'
+  liveCameraFacing: 'environment', // 'environment' or 'user'
+  liveTorchOn: false,
+  liveAutoScan: true,
+  liveDetectionLoopId: null,
+  liveDetectionTimer: null,
+  liveStableCount: 0,
+  liveIsScanning: false,
+  studentScannerMode: 'live', // 'live' or 'file'
+  keyScannerMode: 'live',
+
   // ===== INITIALIZATION =====
   async init() {
     try {
@@ -70,6 +83,7 @@ const App = {
 
   // ===== NAVIGATION & ROUTING =====
   navigateTo(viewName, data = {}) {
+    this.stopLiveCamera();
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 
     const view = document.getElementById(`view-${viewName}`);
@@ -212,6 +226,14 @@ const App = {
         if (e.key === 'Enter') this.createTest();
       });
     }
+
+    // Release camera stream on tab hide or window unload
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.stopLiveCamera();
+    });
+    window.addEventListener('beforeunload', () => {
+      this.stopLiveCamera();
+    });
   },
 
   // ===== HOME VIEW =====
@@ -497,6 +519,12 @@ const App = {
     const content = document.getElementById(`tab-${tabName}`);
     if (btn) btn.classList.add('active');
     if (content) content.classList.add('active');
+
+    if (tabName === 'scan' && this.keyScannerMode === 'live') {
+      setTimeout(() => this.startLiveCamera('key'), 150);
+    } else {
+      this.stopLiveCamera();
+    }
   },
 
   fillDemoKey() {
@@ -637,6 +665,10 @@ const App = {
     const statusEl = document.getElementById('cv-status');
     if (statusEl) {
       statusEl.innerHTML = '<span class="text-success">● Subpixel Engine Ready</span>';
+    }
+
+    if (this.studentScannerMode === 'live') {
+      setTimeout(() => this.startLiveCamera('student'), 150);
     }
 
     setTimeout(() => {
@@ -843,6 +875,462 @@ const App = {
       this.toast('Failed to load sample student scan: ' + err.message, 'error');
     } finally {
       this.hideLoading();
+    }
+  },
+
+  // ===== LIVE CAMERA SCANNING ENGINE (NO PHOTO CAPTURE) =====
+  switchScannerMode(type, mode) {
+    if (type === 'student') this.studentScannerMode = mode;
+    if (type === 'key') this.keyScannerMode = mode;
+
+    const liveTab = document.getElementById(`tab-${type}-mode-live`);
+    const fileTab = document.getElementById(`tab-${type}-mode-file`);
+    const liveContainer = document.getElementById(`${type}-live-container`);
+    const fileContainer = document.getElementById(`${type}-file-container`);
+
+    if (liveTab && fileTab) {
+      liveTab.classList.toggle('active', mode === 'live');
+      fileTab.classList.toggle('active', mode === 'file');
+    }
+
+    if (liveContainer && fileContainer) {
+      if (mode === 'live') {
+        liveContainer.classList.remove('hidden');
+        fileContainer.classList.add('hidden');
+        this.startLiveCamera(type);
+      } else {
+        liveContainer.classList.add('hidden');
+        fileContainer.classList.remove('hidden');
+        this.stopLiveCamera();
+      }
+    }
+  },
+
+  async startLiveCamera(type) {
+    this.stopLiveCamera();
+    this.liveCameraType = type;
+    this.liveStableCount = 0;
+    this.liveIsScanning = false;
+
+    const video = document.getElementById(`${type}-camera-video`);
+    const fallback = document.getElementById(`${type}-camera-fallback`);
+    const statusText = document.getElementById(`${type}-live-status-text`);
+    const statusPill = document.getElementById(`${type}-live-status`);
+
+    if (fallback) fallback.classList.add('hidden');
+    if (statusText) statusText.textContent = 'Opening camera feed...';
+    if (statusPill) statusPill.className = 'live-status-pill searching';
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (fallback) fallback.classList.remove('hidden');
+      this.toast('Live camera stream not supported in this browser/protocol', 'warning');
+      return;
+    }
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: { ideal: this.liveCameraFacing },
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 }
+        },
+        audio: false
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      this.liveCameraStream = stream;
+
+      if (video) {
+        video.srcObject = stream;
+        video.classList.toggle('mirrored', this.liveCameraFacing === 'user');
+        video.onloadedmetadata = () => {
+          video.play().catch(e => console.warn('Video play error:', e));
+          this.startLiveDetectionLoop(type);
+        };
+      }
+      if (statusText) statusText.textContent = 'Align sheet inside viewfinder...';
+    } catch (err) {
+      console.error('[LiveCamera] getUserMedia failed:', err);
+      if (fallback) fallback.classList.remove('hidden');
+      if (statusText) statusText.textContent = 'Camera unavailable';
+      this.toast('Camera access needed to scan live without taking photos', 'info');
+    }
+  },
+
+  stopLiveCamera() {
+    if (this.liveDetectionLoopId) {
+      cancelAnimationFrame(this.liveDetectionLoopId);
+      this.liveDetectionLoopId = null;
+    }
+    if (this.liveDetectionTimer) {
+      clearInterval(this.liveDetectionTimer);
+      this.liveDetectionTimer = null;
+    }
+
+    if (this.liveCameraStream) {
+      this.liveCameraStream.getTracks().forEach(track => {
+        try {
+          if (this.liveTorchOn && track.applyConstraints) {
+            track.applyConstraints({ advanced: [{ torch: false }] });
+          }
+          track.stop();
+        } catch (e) {}
+      });
+      this.liveCameraStream = null;
+    }
+
+    this.liveTorchOn = false;
+    this.liveStableCount = 0;
+    this.liveIsScanning = false;
+
+    ['student', 'key'].forEach(t => {
+      const vid = document.getElementById(`${t}-camera-video`);
+      if (vid) vid.srcObject = null;
+      const torchBtn = document.getElementById(`${t}-btn-torch`);
+      if (torchBtn) torchBtn.classList.remove('active');
+      const container = document.getElementById(`${t}-live-container`);
+      if (container) container.classList.remove('detected');
+    });
+  },
+
+  startLiveDetectionLoop(type) {
+    const video = document.getElementById(`${type}-camera-video`);
+    const overlay = document.getElementById(`${type}-camera-overlay`);
+    const statusText = document.getElementById(`${type}-live-status-text`);
+    const statusPill = document.getElementById(`${type}-live-status`);
+    const container = document.getElementById(`${type}-live-container`);
+
+    if (!video || !overlay) return;
+
+    let laserY = 0;
+    let laserDir = 1;
+    let lastAssessment = null;
+
+    // Fast 60FPS HUD renderer
+    const renderHUD = () => {
+      if (!this.liveCameraStream) return;
+
+      const cw = overlay.clientWidth || 600;
+      const ch = overlay.clientHeight || 450;
+      if (overlay.width !== cw || overlay.height !== ch) {
+        overlay.width = cw;
+        overlay.height = ch;
+      }
+
+      const ctx = overlay.getContext('2d');
+      ctx.clearRect(0, 0, cw, ch);
+
+      // Viewfinder target box (centered, 82% width, 86% height)
+      const boxW = Math.round(cw * 0.84);
+      const boxH = Math.round(ch * 0.88);
+      const boxX = Math.round((cw - boxW) / 2);
+      const boxY = Math.round((ch - boxH) / 2);
+
+      const isLocked = lastAssessment && lastAssessment.detected;
+
+      // Draw Corner Reticles
+      const cornerLen = Math.round(Math.min(cw, ch) * 0.08);
+      ctx.lineWidth = isLocked ? 4 : 2.5;
+      ctx.strokeStyle = isLocked ? '#10b981' : '#06b6d4';
+      ctx.lineCap = 'round';
+      ctx.shadowColor = isLocked ? '#10b981' : '#06b6d4';
+      ctx.shadowBlur = isLocked ? 12 : 6;
+
+      // Top-Left
+      ctx.beginPath();
+      ctx.moveTo(boxX, boxY + cornerLen);
+      ctx.lineTo(boxX, boxY);
+      ctx.lineTo(boxX + cornerLen, boxY);
+      ctx.stroke();
+
+      // Top-Right
+      ctx.beginPath();
+      ctx.moveTo(boxX + boxW - cornerLen, boxY);
+      ctx.lineTo(boxX + boxW, boxY);
+      ctx.lineTo(boxX + boxW, boxY + cornerLen);
+      ctx.stroke();
+
+      // Bottom-Left
+      ctx.beginPath();
+      ctx.moveTo(boxX, boxY + boxH - cornerLen);
+      ctx.lineTo(boxX, boxY + boxH);
+      ctx.lineTo(boxX + cornerLen, boxY + boxH);
+      ctx.stroke();
+
+      // Bottom-Right
+      ctx.beginPath();
+      ctx.moveTo(boxX + boxW - cornerLen, boxY + boxH);
+      ctx.lineTo(boxX + boxW, boxY + boxH);
+      ctx.lineTo(boxX + boxW, boxY + boxH - cornerLen);
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+
+      // Draw subtle vertical alignment guidelines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i <= 4; i++) {
+        const lx = boxX + (boxW * (i / 5));
+        ctx.beginPath();
+        ctx.setLineDash([4, 6]);
+        ctx.moveTo(lx, boxY + 10);
+        ctx.lineTo(lx, boxY + boxH - 10);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // Sweeping animated laser beam
+      laserY += laserDir * (ch * 0.012);
+      if (laserY > boxY + boxH) { laserY = boxY + boxH; laserDir = -1; }
+      else if (laserY < boxY) { laserY = boxY; laserDir = 1; }
+
+      const grad = ctx.createLinearGradient(boxX, laserY, boxX + boxW, laserY);
+      grad.addColorStop(0, 'rgba(6, 182, 212, 0)');
+      grad.addColorStop(0.5, isLocked ? 'rgba(16, 185, 129, 0.9)' : 'rgba(6, 182, 212, 0.85)');
+      grad.addColorStop(1, 'rgba(6, 182, 212, 0)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(boxX, laserY - 1.5, boxW, 3);
+
+      this.liveDetectionLoopId = requestAnimationFrame(renderHUD);
+    };
+
+    this.liveDetectionLoopId = requestAnimationFrame(renderHUD);
+
+    // Run downsampled CV assessment every 260ms
+    if (this.liveDetectionTimer) clearInterval(this.liveDetectionTimer);
+    this.liveDetectionTimer = setInterval(() => {
+      if (!this.liveCameraStream || this.liveIsScanning) return;
+      if (!video.videoWidth || !video.videoHeight) return;
+
+      try {
+        const assessment = omrScanner.quickAssessFrame(video);
+        lastAssessment = assessment;
+
+        if (assessment.detected) {
+          this.liveStableCount++;
+          if (container) container.classList.add('detected');
+          if (statusPill) statusPill.className = 'live-status-pill locked';
+
+          const pct = Math.min(100, Math.round((this.liveStableCount / 3) * 100));
+          if (statusText) {
+            statusText.textContent = this.liveAutoScan
+              ? `OMR Locked! Hold steady (${pct}%)...`
+              : `OMR Sheet Locked (${assessment.layout === '5col' ? '5-Col Grid' : '6-Col Track'})`;
+          }
+
+          // Trigger auto-scan when held steady for 3 consecutive ticks (~800ms)
+          if (this.liveAutoScan && this.liveStableCount >= 3) {
+            this.scanLiveFrame(type);
+          }
+        } else {
+          this.liveStableCount = Math.max(0, this.liveStableCount - 1);
+          if (container) container.classList.remove('detected');
+          if (statusPill) statusPill.className = 'live-status-pill searching';
+          if (statusText) statusText.textContent = assessment.message || 'Position sheet inside viewfinder...';
+        }
+      } catch (err) {
+        // Continue silently during video frame transitions
+      }
+    }, 260);
+  },
+
+  async scanLiveFrame(type) {
+    if (this.liveIsScanning) return;
+    this.liveIsScanning = true;
+
+    const video = document.getElementById(`${type}-camera-video`);
+    const btnScan = document.getElementById(`${type}-btn-scan-now`);
+    const flashEl = document.getElementById(`${type}-camera-flash`);
+
+    if (!video || !video.videoWidth) {
+      this.toast('Camera video feed not ready yet', 'warning');
+      this.liveIsScanning = false;
+      return;
+    }
+
+    if (btnScan) {
+      btnScan.classList.add('scanning');
+      btnScan.innerHTML = `<span>Evaluating...</span>`;
+    }
+
+    // Trigger visual shutter flash, acoustic chime & haptic buzz
+    if (flashEl) {
+      flashEl.classList.remove('flash');
+      void flashEl.offsetWidth;
+      flashEl.classList.add('flash');
+    }
+    this.playScannerChime();
+    this.triggerHaptic();
+
+    this.showLoading('Valuating live video frame with Subpixel CV...');
+
+    try {
+      const debugCanvas = document.getElementById(type === 'student' ? 'scan-debug-canvas' : 'key-debug-canvas');
+      if (debugCanvas) omrScanner.setDebugCanvas(debugCanvas);
+
+      const numQ = this.currentTest?.numQuestions || 200;
+      const key = type === 'student' ? this.currentTest?.answerKey : null;
+
+      // Direct frame valuation from memory (zero file created / zero photo saved)
+      const result = await omrScanner.processFrame(video, numQ, key);
+
+      // Stop camera once scanned successfully
+      this.stopLiveCamera();
+
+      if (type === 'student') {
+        let studentName = document.getElementById('input-student-name')?.value.trim();
+        if (result.rollNumber) {
+          this.currentRollNumber = result.rollNumber;
+          if (!studentName) studentName = `Candidate #${result.rollNumber}`;
+          else if (!studentName.includes(result.rollNumber)) studentName += ` (Roll: ${result.rollNumber})`;
+        }
+        if (!studentName) {
+          studentName = 'Candidate #' + (Math.floor(Math.random() * 9000) + 1000);
+        }
+
+        this.currentStudentName = studentName;
+        this.currentAnswers = result.answers;
+        this.currentConfidence = result.confidence || [];
+
+        const debugWrap = document.getElementById('scan-debug-wrap');
+        if (debugWrap) debugWrap.classList.remove('hidden');
+
+        this.navigateTo('review', {
+          answers: result.answers,
+          confidence: result.confidence,
+          bubbleDetails: result.bubbleDetails,
+          multiDetails: result.multiDetails,
+          rollNumber: result.rollNumber,
+          studentName: this.currentStudentName
+        });
+
+        const multiCount = result.answers.filter(a => a === 'MULTIPLE').length;
+        let msg = `Valuation complete for ${studentName}`;
+        if (multiCount > 0) msg += ` (${multiCount} double-bubbled questions flagged with 0 marks)`;
+        this.toast(msg, 'success');
+      } else {
+        // Master Answer Key
+        this.keyMultiDetails = result.multiDetails || {};
+        let singleDetected = 0;
+        let multiDetected = 0;
+        for (let i = 0; i < result.answers.length; i++) {
+          if (result.answers[i]) {
+            this.currentTest.answerKey[i] = result.answers[i];
+            if (result.answers[i] === 'MULTIPLE') multiDetected++;
+            else singleDetected++;
+          }
+        }
+
+        const debugWrap = document.getElementById('key-debug-wrap');
+        if (debugWrap) debugWrap.classList.remove('hidden');
+
+        this.switchTab('manual');
+        this.renderAnswerKeyGrid();
+        this.updateKeyProgress();
+
+        let msg = `Answer Key scanned live! (${singleDetected} answers detected)`;
+        if (multiDetected > 0) msg += ` [${multiDetected} double-filled detected]`;
+        this.toast(msg, 'success');
+      }
+    } catch (err) {
+      console.error('[LiveCamera] Scan frame error:', err);
+      this.toast('Live scan failed: ' + err.message, 'error');
+    } finally {
+      this.hideLoading();
+      this.liveIsScanning = false;
+      if (btnScan) {
+        btnScan.classList.remove('scanning');
+        btnScan.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><span>Scan Live Sheet</span>`;
+      }
+    }
+  },
+
+  async toggleCameraTorch(type) {
+    if (!this.liveCameraStream) return;
+    const track = this.liveCameraStream.getVideoTracks()[0];
+    if (!track) return;
+
+    const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+    if (!capabilities.torch) {
+      this.toast('Flashlight / torch not supported by this camera hardware', 'info');
+      return;
+    }
+
+    try {
+      this.liveTorchOn = !this.liveTorchOn;
+      await track.applyConstraints({ advanced: [{ torch: this.liveTorchOn }] });
+      const btn = document.getElementById(`${type}-btn-torch`);
+      if (btn) btn.classList.toggle('active', this.liveTorchOn);
+      this.toast(`Torch ${this.liveTorchOn ? 'ON' : 'OFF'}`, 'info');
+    } catch (err) {
+      console.warn('Torch toggle error:', err);
+    }
+  },
+
+  async flipCamera(type) {
+    this.liveCameraFacing = (this.liveCameraFacing === 'environment') ? 'user' : 'environment';
+    await this.startLiveCamera(type);
+    this.toast(`Switched to ${this.liveCameraFacing === 'user' ? 'front' : 'rear'} camera`, 'info');
+  },
+
+  toggleAutoScan(type) {
+    this.liveAutoScan = !this.liveAutoScan;
+    this.liveStableCount = 0;
+
+    const toggle = document.getElementById(`${type}-toggle-autoscan`);
+    const label = document.getElementById(`${type}-autoscan-label`);
+    const badge = document.getElementById(`${type}-live-mode-badge`);
+
+    if (toggle) toggle.classList.toggle('active', this.liveAutoScan);
+    if (label) label.textContent = this.liveAutoScan ? 'ON' : 'OFF';
+    if (badge) badge.textContent = this.liveAutoScan ? 'AUTO-DETECT ON' : 'MANUAL SCAN';
+
+    this.toast(
+      this.liveAutoScan
+        ? 'Auto-Scan enabled: Sheet evaluates automatically when held steady'
+        : 'Auto-Scan paused: Tap the "Scan Live Sheet" button when ready',
+      'info'
+    );
+  },
+
+  playScannerChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // High crisp tone
+      const osc1 = ctx.createOscillator();
+      const g1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(880, now);
+      osc1.frequency.exponentialRampToValueAtTime(1320, now + 0.08);
+      g1.gain.setValueAtTime(0.25, now);
+      g1.gain.linearRampToValueAtTime(0.01, now + 0.12);
+      osc1.connect(g1);
+      g1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.12);
+
+      // Chime resonance
+      const osc2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1760, now + 0.08);
+      g2.gain.setValueAtTime(0.2, now + 0.08);
+      g2.gain.linearRampToValueAtTime(0.01, now + 0.24);
+      osc2.connect(g2);
+      g2.connect(ctx.destination);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.24);
+    } catch (e) {}
+  },
+
+  triggerHaptic() {
+    if (navigator.vibrate) {
+      try { navigator.vibrate([40, 60, 40]); } catch (e) {}
     }
   },
 

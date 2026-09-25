@@ -52,12 +52,107 @@ class OMRScanner {
   }
 
   /**
+   * Process a frame from an HTMLVideoElement, HTMLCanvasElement, or HTMLImageElement directly
+   */
+  processFrame(source, numQuestions = 200, answerKey = null) {
+    return this._processImage(source, numQuestions, answerKey);
+  }
+
+  /**
+   * Fast real-time frame assessment (runs in ~2-4ms on downscaled video)
+   * Determines if an OMR sheet is in view and stable
+   */
+  quickAssessFrame(source) {
+    const sw = source.videoWidth || source.naturalWidth || source.width;
+    const sh = source.videoHeight || source.naturalHeight || source.height;
+    if (!sw || !sh) return { detected: false, message: 'Camera feed loading...' };
+
+    const targetW = 400;
+    const targetH = Math.round(sh * (targetW / sw));
+
+    if (!this._assessCanvas && typeof document !== 'undefined') {
+      this._assessCanvas = document.createElement('canvas');
+    }
+    if (!this._assessCanvas) return { detected: true, message: 'Ready' };
+
+    const c = this._assessCanvas;
+    c.width = targetW;
+    c.height = targetH;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(source, 0, 0, targetW, targetH);
+    const idata = ctx.getImageData(0, 0, targetW, targetH);
+    const px = idata.data;
+    const gray = new Uint8Array(targetW * targetH);
+    for (let i = 0; i < targetW * targetH; i++) {
+      const idx = i * 4;
+      gray[i] = Math.round(0.299 * px[idx] + 0.587 * px[idx + 1] + 0.114 * px[idx + 2]);
+    }
+
+    const paper = this._findPaperBounds(gray, targetW, targetH);
+    const { px0, py0, px1, py1, pw, ph } = paper;
+
+    const areaRatio = (pw * ph) / (targetW * targetH);
+    if (areaRatio < 0.22) {
+      return {
+        detected: false,
+        paper,
+        areaRatio,
+        message: 'Position OMR sheet closer'
+      };
+    }
+
+    let maxDark = 0;
+    const sY0 = Math.round(py0 + ph * 0.04);
+    const sY1 = Math.round(py0 + ph * 0.18);
+    const lX0 = Math.round(px0 + pw * 0.10);
+    const lX1 = Math.round(px0 + pw * 0.90);
+    for (let y = sY0; y < sY1; y++) {
+      let dark = 0;
+      const row = y * targetW;
+      for (let x = lX0; x < lX1; x++) {
+        if (gray[row + x] < 140) dark++;
+      }
+      if (dark > maxDark) maxDark = dark;
+    }
+
+    const is5Col = maxDark > (pw * 0.35);
+
+    let is6Col = false;
+    if (!is5Col) {
+      const squares = this._findSquares(gray, targetW, targetH, paper);
+      if (squares && squares.length >= 5) {
+        is6Col = true;
+      }
+    }
+
+    const detected = is5Col || is6Col;
+    return {
+      detected,
+      layout: is5Col ? '5col' : (is6Col ? '6col' : null),
+      paper,
+      areaRatio,
+      normalizedPaper: {
+        x: px0 / targetW,
+        y: py0 / targetH,
+        width: pw / targetW,
+        height: ph / targetH
+      },
+      message: detected
+        ? `OMR Sheet Locked (${is5Col ? '5-Col Grid' : '6-Col Track'})`
+        : 'Align sheet inside viewfinder'
+    };
+  }
+
+  /**
    * Core image processing pipeline
    */
   _processImage(img, numQuestions = 200, answerKey = null) {
     const targetWidth = 1000;
-    const imgW = img.naturalWidth || img.width;
-    const imgH = img.naturalHeight || img.height;
+    const imgW = img.videoWidth || img.naturalWidth || img.width;
+    const imgH = img.videoHeight || img.naturalHeight || img.height;
+    if (!imgW || !imgH) {
+      throw new Error('Invalid image or video dimensions: camera stream not ready');
+    }
     const scale = targetWidth / imgW;
     const w = targetWidth;
     const h = Math.round(imgH * scale);

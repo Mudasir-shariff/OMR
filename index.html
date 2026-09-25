@@ -333,11 +333,72 @@
 
         <!-- Scan Tab -->
         <div id="tab-scan" class="tab-content">
-          <div class="scanner-viewport-card mb-16">
-            <p class="text-secondary text-sm mb-16">
-              Capture or upload an image of the official Master Answer Key sheet. The pure canvas engine will auto-detect answers across all 5 columns with subpixel accuracy.
-            </p>
+          <p class="text-secondary text-sm mb-16">
+            Scan the official Master Answer Key sheet live through your camera without snapping photos, or upload an existing image file.
+          </p>
 
+          <!-- Mode Switcher -->
+          <div class="scanner-mode-tabs mb-16">
+            <button type="button" class="scanner-mode-tab active" id="tab-key-mode-live" onclick="App.switchScannerMode('key', 'live')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+              <span>Live Camera Scanner (No Photo)</span>
+            </button>
+            <button type="button" class="scanner-mode-tab" id="tab-key-mode-file" onclick="App.switchScannerMode('key', 'file')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image File</span>
+            </button>
+          </div>
+
+          <!-- Live Camera Viewport Container -->
+          <div id="key-live-container" class="live-viewport-wrap mb-16">
+            <video id="key-camera-video" class="live-video" playsinline autoplay muted></video>
+            <canvas id="key-camera-overlay" class="live-overlay-canvas"></canvas>
+            <div id="key-camera-flash" class="camera-flash-overlay"></div>
+
+            <!-- Top Status HUD -->
+            <div class="live-hud-top">
+              <div id="key-live-status" class="live-status-pill searching">
+                <span class="status-dot"></span>
+                <span id="key-live-status-text">Position Key sheet inside frame...</span>
+              </div>
+              <div class="live-hud-badge" id="key-live-mode-badge">AUTO-DETECT ON</div>
+            </div>
+
+            <!-- Bottom Floating Controls -->
+            <div class="live-hud-bottom">
+              <button type="button" id="key-btn-torch" class="btn-live-action" onclick="App.toggleCameraTorch('key')" title="Toggle Torch / Flashlight">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="18" x2="15" y2="18"></line><line x1="10" y1="22" x2="14" y2="22"></line><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
+              </button>
+
+              <button type="button" id="key-btn-scan-now" class="btn-live-scan-now" onclick="App.scanLiveFrame('key')" title="Instantly scan the current live video frame">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <span>Scan Live Sheet</span>
+              </button>
+
+              <button type="button" id="key-btn-flip" class="btn-live-action" onclick="App.flipCamera('key')" title="Switch Front/Rear Camera">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 2.062.78 3.94 2.06 5.36L4 18h5v-5l-1.63 1.63C6.46 13.52 6 11.83 6 10c0-3.314 2.686-6 6-6s6 2.686 6 6c0 1.83-.46 3.52-1.37 4.63L18 16c1.28-1.42 2.06-3.3 2.06-6z"></path></svg>
+              </button>
+
+              <div id="key-toggle-autoscan" class="live-autoscan-toggle active" onclick="App.toggleAutoScan('key')" title="Automatically scans when sheet is held steady">
+                <span>⚡ Auto-Scan: <strong id="key-autoscan-label">ON</strong></span>
+              </div>
+            </div>
+
+            <!-- Permission / Fallback View -->
+            <div id="key-camera-fallback" class="live-camera-fallback hidden">
+              <div class="empty-icon-wrap mb-12">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              </div>
+              <div class="empty-title">Camera Permission Needed</div>
+              <div class="empty-text mb-16">Enable camera access to scan OMR answer key sheets live in real-time without taking photos.</div>
+              <button type="button" class="btn btn-primary" onclick="App.startLiveCamera('key')">
+                <span>Enable Live Camera</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- File Upload Container (Secondary) -->
+          <div id="key-file-container" class="scanner-viewport-card mb-16 hidden">
             <div class="scanner-area" id="key-scanner-area">
               <div class="hud-corner-tr"></div>
               <div class="hud-corner-bl"></div>
@@ -349,9 +410,9 @@
                   <circle cx="12" cy="13" r="4"></circle>
                 </svg>
               </div>
-              <div class="scanner-text">Tap or Drop Answer Key Sheet</div>
+              <div class="scanner-text">Tap or Drop Answer Key Sheet File</div>
               <div class="scanner-hint">Supports 5-Column Grid Sheet & 6-Column Layouts</div>
-              <input type="file" id="key-scan-input" accept="image/*" capture="environment">
+              <input type="file" id="key-scan-input" accept="image/*">
             </div>
 
             <!-- Sample Key Preloader Button -->
@@ -411,7 +472,68 @@
             <span>Evaluation Capture Methods</span>
           </div>
 
-          <div class="scanner-viewport-card mb-16">
+          <!-- Mode Switcher -->
+          <div class="scanner-mode-tabs mb-16">
+            <button type="button" class="scanner-mode-tab active" id="tab-student-mode-live" onclick="App.switchScannerMode('student', 'live')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+              <span>Live Camera Scanner (No Photo)</span>
+            </button>
+            <button type="button" class="scanner-mode-tab" id="tab-student-mode-file" onclick="App.switchScannerMode('student', 'file')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Image File</span>
+            </button>
+          </div>
+
+          <!-- Live Camera Viewport Container -->
+          <div id="student-live-container" class="live-viewport-wrap mb-16">
+            <video id="student-camera-video" class="live-video" playsinline autoplay muted></video>
+            <canvas id="student-camera-overlay" class="live-overlay-canvas"></canvas>
+            <div id="student-camera-flash" class="camera-flash-overlay"></div>
+
+            <!-- Top Status HUD -->
+            <div class="live-hud-top">
+              <div id="student-live-status" class="live-status-pill searching">
+                <span class="status-dot"></span>
+                <span id="student-live-status-text">Position Student OMR sheet inside frame...</span>
+              </div>
+              <div class="live-hud-badge" id="student-live-mode-badge">AUTO-DETECT ON</div>
+            </div>
+
+            <!-- Bottom Floating Controls -->
+            <div class="live-hud-bottom">
+              <button type="button" id="student-btn-torch" class="btn-live-action" onclick="App.toggleCameraTorch('student')" title="Toggle Torch / Flashlight">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="18" x2="15" y2="18"></line><line x1="10" y1="22" x2="14" y2="22"></line><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
+              </button>
+
+              <button type="button" id="student-btn-scan-now" class="btn-live-scan-now" onclick="App.scanLiveFrame('student')" title="Instantly scan the current live video frame">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                <span>Scan Live Sheet</span>
+              </button>
+
+              <button type="button" id="student-btn-flip" class="btn-live-action" onclick="App.flipCamera('student')" title="Switch Front/Rear Camera">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 2.062.78 3.94 2.06 5.36L4 18h5v-5l-1.63 1.63C6.46 13.52 6 11.83 6 10c0-3.314 2.686-6 6-6s6 2.686 6 6c0 1.83-.46 3.52-1.37 4.63L18 16c1.28-1.42 2.06-3.3 2.06-6z"></path></svg>
+              </button>
+
+              <div id="student-toggle-autoscan" class="live-autoscan-toggle active" onclick="App.toggleAutoScan('student')" title="Automatically scans when sheet is held steady">
+                <span>⚡ Auto-Scan: <strong id="student-autoscan-label">ON</strong></span>
+              </div>
+            </div>
+
+            <!-- Permission / Fallback View -->
+            <div id="student-camera-fallback" class="live-camera-fallback hidden">
+              <div class="empty-icon-wrap mb-12">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              </div>
+              <div class="empty-title">Camera Permission Needed</div>
+              <div class="empty-text mb-16">Enable camera access to scan student OMR sheets live in real-time without taking photos.</div>
+              <button type="button" class="btn btn-primary" onclick="App.startLiveCamera('student')">
+                <span>Enable Live Camera</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- File Upload Container (Secondary) -->
+          <div id="student-file-container" class="scanner-viewport-card mb-16 hidden">
             <div class="scanner-area" id="student-scanner-area">
               <div class="hud-corner-tr"></div>
               <div class="hud-corner-bl"></div>
@@ -423,11 +545,11 @@
                   <circle cx="12" cy="13" r="4"></circle>
                 </svg>
               </div>
-              <div class="scanner-text">Tap Camera or Drop Student OMR Sheet</div>
+              <div class="scanner-text">Tap to Select or Drop Student OMR Sheet File</div>
               <div id="cv-status" class="scanner-hint">
                 <span class="text-success">● Subpixel Engine Ready</span>
               </div>
-              <input type="file" id="scan-file-input" accept="image/*" capture="environment">
+              <input type="file" id="scan-file-input" accept="image/*">
             </div>
 
             <!-- Instant Sample Student Loader -->

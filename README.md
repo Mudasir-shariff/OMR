@@ -1,6 +1,6 @@
-# OMR Dot Scanner — Universal Optical Mark Recognition System
-### BGS Group of Institutions — Chickballapur Division
-*Sri Adichunchanagiri Shikshana Trust®*
+# OMR Dot Scanner ï¿½ Universal Optical Mark Recognition System
+### BGS Group of Institutions ï¿½ Chickballapur Division
+*Sri Adichunchanagiri Shikshana Trustï¿½*
 
 A web-based, pure-canvas Optical Mark Recognition (OMR) valuation system designed for **Karnataka CET** and **NEET** Pre-University examination assessment.
 
@@ -8,11 +8,20 @@ A web-based, pure-canvas Optical Mark Recognition (OMR) valuation system designe
 
 ## Key Features
 
+- **Live Real-Time Video Scanner (No Photo Capture Required)**:
+  - Streams camera video directly inside the app using WebRTC `getUserMedia`.
+  - Continuous real-time sheet detection HUD with sweeping laser scanline, alignment reticles, and auto-detect stability indicator.
+  - **Auto-Scan Mode**: Evaluates sheet instantly in RAM as soon as held steady for ~800ms (zero photo saving, zero system dialogs).
+  - Instant 1-tap **"Scan Live Sheet"** action button.
+  - Hardware controls: Device torch/flashlight toggle and front/rear camera flip.
+  - Secondary file upload mode for legacy image files and verified sample sheets.
 - **Advanced Computer Vision (Pure Canvas API)**:
+
+
   - Dynamic table grid border detection (`tableTop`, `tableBottom`, and vertical column dividers).
-  - Adaptive circle-interior sampling (3×3 patch sampled strictly at circle centers without touching printed outer borders).
+  - Adaptive circle-interior sampling (3ï¿½3 patch sampled strictly at circle centers without touching printed outer borders).
   - Dual layout support:
-    - **5-Column Grid Sheet** (40 questions/col × 5 columns = 200 Questions).
+    - **5-Column Grid Sheet** (40 questions/col ï¿½ 5 columns = 200 Questions).
     - **6-Column Track Sheet** (26 + 26 + 37 + 37 + 37 + 37 = 200 Questions + 6-digit Roll Number).
 - **Strict Scoring Rule**:
   - Automatically flags double-bubbled / multiple filled questions (`MULTIPLE`).
@@ -25,7 +34,7 @@ A web-based, pure-canvas Optical Mark Recognition (OMR) valuation system designe
 - **Institutional Excel (`.xlsx`) Auto-Sync**:
   - Generates institutional workbooks on save with:
     - **Sheet 1 (`Institutional Summary`)**: Exam metadata, class analytics (Average, Highest, Lowest, Pass Rate = 40%), and Student Award Roll.
-    - **Sheet 2 (`Question Diagnostic Matrix`)**: Complete `Q1` to `Q200` matrix comparing each student choice against the official answer key (`A ?`, `C ? [Key: A]`, `?? MULTI (0)`, `—`).
+    - **Sheet 2 (`Question Diagnostic Matrix`)**: Complete `Q1` to `Q200` matrix comparing each student choice against the official answer key (`A ?`, `C ? [Key: A]`, `?? MULTI (0)`, `ï¿½`).
     - **Sheet 3 (`Master Answer Key`)**: Subject section mapping and official key.
 - **Zero External Runtime Dependencies**:
   - Pure Vanilla JavaScript, HTML5 Canvas, and Vanilla CSS with SheetJS (`xlsx`) for spreadsheet generation.
