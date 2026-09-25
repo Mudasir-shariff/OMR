@@ -323,7 +323,7 @@ class OMRScanner {
       return candidates[0];
     };
 
-    const bestT0 = pickBest(0.08, 0.22);
+    const bestT0 = pickBest(0.08, 0.16);
     const bestT1 = pickBest(0.32, 0.44);
     const bestT2 = pickBest(0.52, 0.64);
     const bestT3 = pickBest(0.72, 0.86);
